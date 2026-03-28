@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -6,70 +7,59 @@
     <style>
       body { margin: 0; overflow: hidden; }
       #start-button {
-        position: absolute; left: 50%; top: 50%;
-        transform: translate(-50%, -50%);
-        padding: 15px 30px; font-size: 20px;
-        background-color: #007bff; color: white;
-        border: none; border-radius: 5px; cursor: pointer;
-        z-index: 100;
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        padding: 15px 30px; font-size: 18px; background: #e74c3c; color: white;
+        border: none; border-radius: 8px; z-index: 999; cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <button id="start-button">AR Deneyimini Başlat</button>
+    <button id="start-button">Kamerayı Başlat</button>
 
-   <a-scene mindar-image="imageTargetSrc: ./targets%20(4).mind;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"> renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-scene 
+      mindar-image="imageTargetSrc: ./targets (4).mind; autoStart: false;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <a-asset-item id="anitkabirModel" src="./anitkabir_model.glb"></a-asset-item>
-        
-        <audio id="anitkabirSes" src="./anitkabir_bilgi.mp3" preload="auto"></audio>
+        <a-asset-item id="anitkabirModel" src="./model.glb"></a-asset-item>
+        <audio id="anitkabirSes" src="./bilgi.mp3" preload="auto"></audio>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity id="ar-target" mindar-image-target="targetIndex: 0">
-        
-        <a-gltf-model src="#anitkabirModel" position="0 0 0" scale="0.1 0.1 0.1" rotation="0 180 0"></a-gltf-model>
-
-        <a-entity sound="src: #anitkabirSes; autoplay: false; loop: false; poolSize: 1"></a-entity>
-
+      <a-entity id="target0" mindar-image-target="targetIndex: 0">
+        <a-box position="0 0 0" scale="0.5 0.5 0.5" color="red"></a-box>
       </a-entity>
     </a-scene>
 
     <script>
-      // Gerekli HTML öğelerini seçelim
       const startButton = document.querySelector('#start-button');
-      const targetEl = document.querySelector('#ar-target');
+      const sceneEl = document.querySelector('a-scene');
       const audioEl = document.querySelector('#anitkabirSes');
 
-      // Başlat butonuna tıklandığında sesi tarayıcıya tanıtıyoruz
       startButton.addEventListener('click', () => {
-        // Butonu gizle
         startButton.style.display = 'none';
         
-        // Sesi kullanıcı etkileşimiyle "etkinleştir"
-        // (Tarayıcıların ses engellemesini aşmak için)
+        // Sistemi ve kamerayı başlat
+        sceneEl.systems['mindar-image-system'].start(); 
+        
+        // Sesi kullanıcı izniyle aktifleştir
         audioEl.play().then(() => {
-          audioEl.pause(); // Hemen durdur, sadece etkinleştirmiş olduk
+          audioEl.pause();
           audioEl.currentTime = 0;
-          console.log("Ses etkinleştirildi ve hazır.");
-        }).catch(error => {
-          console.error("Ses etkinleştirilemedi:", error);
-        });
+        }).catch(e => console.log("Ses henüz hazır değil"));
       });
 
-      // Hedef (Anıtkabir resmi) bulunduğunda tetiklenir
-      targetEl.addEventListener('targetFound', event => {
-        console.log("Anıtkabir resmi bulundu! Model gösteriliyor, ses çalınıyor.");
-        audioEl.play(); // Sesi oynat
+      // Hedef bulunduğunda ses çal
+      const target0 = document.querySelector('#target0');
+      target0.addEventListener("targetFound", event => {
+        audioEl.play();
       });
-
-      // Hedef kaybedildiğinde (kamera resimden çekildiğinde) tetiklenir
-      targetEl.addEventListener('targetLost', event => {
-        console.log("Anıtkabir resmi kayboldu.");
-        audioEl.pause(); // Sesi durdur
-        audioEl.currentTime = 0; // Başa sar (İstersen bunu yapmayabilirsin)
+      target0.addEventListener("targetLost", event => {
+        audioEl.pause();
       });
     </script>
   </body>
