@@ -2,79 +2,87 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/mindar-image-aframe.prod.js"></script>
     <style>
-      body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+      body { margin: 0; overflow: hidden; background: #000; }
+      
+      /* Giriş Ekranı - Tam Ekran */
       #welcome-screen {
-        position: fixed; inset: 0; background: #1a1a1a;
+        position: fixed; inset: 0; 
+        background: linear-gradient(180deg, #1a1a1a, #000);
         display: flex; flex-direction: column; justify-content: center;
         align-items: center; color: white; z-index: 9999;
+        text-align: center;
       }
+
       #start-button {
-        padding: 20px 40px; font-size: 20px; background: #f1c40f;
-        color: #000; border: none; border-radius: 50px; cursor: pointer;
-        font-weight: bold; margin-top: 20px;
+        padding: 15px 40px; font-size: 20px; background: #c0392b;
+        color: white; border: none; border-radius: 5px; cursor: pointer;
+        font-weight: bold; margin-top: 20px; box-shadow: 0 0 15px rgba(192, 57, 43, 0.5);
       }
-      #error-log {
-        position: fixed; bottom: 10px; left: 10px; color: red;
-        font-size: 12px; z-index: 10000; background: rgba(0,0,0,0.7);
-      }
+
+      /* Kameranın tam ekran olmasını sağlayan kritik CSS */
+      .mindar-ui-overlay { z-index: 500; }
+      canvas { width: 100% !important; height: 100% !important; }
     </style>
   </head>
   <body>
 
     <div id="welcome-screen">
-      <h1 style="letter-spacing: 3px;">ANITKABİR AR</h1>
-      <p>Kamerayı başlatmak için dokun</p>
-      <button id="start-button">BAŞLAT</button>
+      <h1 style="letter-spacing: 2px;">ANITKABİR AR</h1>
+      <p style="opacity: 0.7;">Deneyimi başlatmak için dokun</p>
+      <button id="start-button">KEŞFET</button>
     </div>
-
-    <div id="error-log"></div>
 
     <a-scene 
       mindar-image="imageTargetSrc: ./targets%20(4).mind; autoStart: false; uiScanning: yes;" 
-      embedded color-space="sRGB" 
+      embedded
+      color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false">
       
+      <a-assets>
+        <a-asset-item id="anitkabirModel" src="./model.glb"></a-asset-item>
+        <audio id="anitkabirSes" src="./bilgi.mp3" preload="auto"></audio>
+      </a-assets>
+
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity id="target0" mindar-image-target="targetIndex: 0">
-        <a-box position="0 0 0" scale="0.5 0.5 0.5" color="red"></a-box>
+          <a-sphere position="0 0 0" radius="0.2" color="#fff" opacity="0.6"></a-sphere>
       </a-entity>
     </a-scene>
 
     <script>
-      const log = (msg) => { document.getElementById('error-log').innerHTML += msg + "<br>"; };
-      
-      window.addEventListener('load', () => {
-        const startButton = document.querySelector('#start-button');
-        const welcomeScreen = document.querySelector('#welcome-screen');
-        const sceneEl = document.querySelector('a-scene');
+      const startButton = document.querySelector('#start-button');
+      const welcomeScreen = document.querySelector('#welcome-screen');
+      const sceneEl = document.querySelector('a-scene');
+      const audioEl = document.querySelector('#anitkabirSes');
 
-        startButton.addEventListener('click', () => {
-          log("Başlatılıyor...");
-          
-          // 1. Ekranı gizle
-          welcomeScreen.style.display = 'none';
+      startButton.addEventListener('click', () => {
+        welcomeScreen.style.display = 'none';
+        
+        // Kamerayı zorla başlat
+        const arSystem = sceneEl.systems['mindar-image-system'];
+        arSystem.start(); 
 
-          // 2. Sistemi başlatmayı dene
-          try {
-            const arSystem = sceneEl.systems['mindar-image-system'];
-            arSystem.start(); 
-            log("Sistem start komutu verildi.");
-          } catch (err) {
-            log("Hata: " + err.message);
-            alert("Kamera başlatılamadı: " + err.message);
-          }
-        });
+        // Sesi aktifleştir
+        if(audioEl) {
+            audioEl.play().then(() => {
+                audioEl.pause();
+                audioEl.currentTime = 0;
+            }).catch(e => console.log("Ses hazır değil."));
+        }
       });
 
-      // Kamera izin hatalarını yakala
-      window.addEventListener("arjs-video-error", (e) => {
-        log("Kamera Hatası: İzin verilmedi veya bulunamadı.");
+      const target0 = document.querySelector('#target0');
+      target0.addEventListener("targetFound", () => {
+        if(audioEl) audioEl.play();
+      });
+      target0.addEventListener("targetLost", () => {
+        if(audioEl) audioEl.pause();
       });
     </script>
   </body>
