@@ -2,180 +2,152 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anıtkabir AR Hologram Projesi | Furkan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Anıtkabir AR - Ibrahim Yildirim</title>
     
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        /* 1. KRİTİK FİX: Kamerayı tam ekrana yayan CSS ayarları */
-        html, body {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000;
+        /* KAMERA TAM EKRAN ZORLAMASI */
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            overflow: hidden; background-color: #000; 
         }
         
-        /* MindAR'ın oluşturduğu video ve canvas öğelerini tam ekrana zorla */
-        .mindar-ui-overlay { z-index: 1001 !important; }
-        canvas { width: 100% !important; height: 100% !important; left: 0; top: 0; position: absolute; }
-        video { 
-            width: 100% !important; height: 100% !important; 
-            object-fit: cover !important; 
-            position: absolute; top: 0; left: 0; 
+        /* MindAR ve A-Frame'in oluşturduğu tüm görsel öğeleri tam ekrana sabitle */
+        canvas, video {
+            width: 100vw !important;
+            height: 100vh !important;
+            object-fit: cover !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
         }
 
-        /* 2. ANITKABİR KIRMIZISI TEMA */
+        /* ANITKABİR KIRMIZISI ARAYÜZ */
         #ar-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 0, 0, 0.6); /* Hafif kırmızımsı karanlık */
             z-index: 1000; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            transition: opacity 0.6s ease;
+            background: rgba(0, 0, 0, 0.2); /* Kamera arkada görünsün */
+            pointer-events: none; transition: opacity 0.5s;
         }
 
-        /* Sade ve Şık Tarama Çerçevesi */
         .scan-frame {
-            width: 280px; height: 280px;
-            border: 2px solid #ff0000;
-            border-radius: 40px; position: relative;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4), inset 0 0 20px rgba(255, 0, 0, 0.2);
-            display: flex; align-items: center; justify-content: center;
+            width: 70vw; height: 70vw; max-width: 300px; max-height: 300px;
+            border: 3px solid #ff0000; border-radius: 40px;
+            position: relative; box-shadow: 0 0 20px #ff0000;
         }
 
         .scan-line {
-            width: 90%; height: 3px; background: #ff0000;
+            width: 100%; height: 4px; background: #ff0000;
             box-shadow: 0 0 15px #ff0000; position: absolute;
-            animation: moveScan 3s infinite ease-in-out;
-            opacity: 0.8;
+            top: 0; animation: moveLine 3s infinite ease-in-out;
         }
 
-        @keyframes moveScan {
-            0%, 100% { transform: translateY(-110px); }
-            50% { transform: translateY(110px); }
+        @keyframes moveLine {
+            0%, 100% { top: 10%; opacity: 0.3; }
+            50% { top: 90%; opacity: 1; }
         }
 
         #status-text {
-            color: #ffffff; font-family: 'Segoe UI', sans-serif;
-            font-weight: bold; margin-top: 30px; letter-spacing: 2px;
-            text-align: center; text-transform: uppercase;
-            text-shadow: 2px 2px 5px #000;
+            margin-top: 40px; color: #fff; font-family: sans-serif;
+            font-weight: bold; letter-spacing: 2px; text-align: center;
+            text-shadow: 0 0 10px #ff0000; background: rgba(0,0,0,0.5);
+            padding: 10px 20px; border-radius: 20px;
         }
 
-        /* Hologram Bilgi Paneli */
-        #hologram-card {
+        /* ALT BİLGİ KARTI */
+        #info-panel {
             position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
-            width: 85%; background: linear-gradient(135deg, #8b0000 0%, #000000 100%);
-            border: 2px solid #ff0000; border-radius: 20px; color: #fff;
-            padding: 20px; text-align: center; z-index: 1002;
-            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 -10px 30px rgba(255, 0, 0, 0.3);
+            width: 80%; background: linear-gradient(to right, #600, #b00, #600);
+            color: white; padding: 15px; border-radius: 20px; text-align: center;
+            z-index: 1001; transition: bottom 0.5s; border: 1px solid #fff;
         }
 
-        .active-info { bottom: 40px !important; }
-        .hidden { opacity: 0; pointer-events: none; }
-        
-        /* Yükleme ikonu */
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid rgba(255,0,0,0.3);
-            border-top: 4px solid #ff0000; border-radius: 50%;
-            animation: spin 1s linear infinite; margin-bottom: 15px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .show-info { bottom: 50px !important; }
+        .hidden { opacity: 0 !important; }
     </style>
 </head>
 <body>
 
     <div id="ar-overlay">
-        <div class="spinner"></div>
         <div class="scan-frame">
             <div class="scan-line"></div>
         </div>
-        <div id="status-text">ANITKABİR GÖRSELİNİ<br><span style="color:#ff0000; font-size: 20px;">TARAYIN</span></div>
+        <div id="status-text">ANITKABİR GÖRSELİNİ TARAYIN</div>
     </div>
 
-    <div id="hologram-card">
-        <h2 style="margin: 0; letter-spacing: 2px;">ANITKABİR</h2>
-        <div style="width: 50px; height: 2px; background: #ff0000; margin: 10px auto;"></div>
-        <p style="margin: 0; font-size: 14px; opacity: 0.8;">Hologram Projeksiyonu Aktif</p>
+    <div id="info-panel">
+        <h2 style="margin:0; font-size: 18px;">ANITKABİR</h2>
+        <p style="margin:5px 0 0 0; font-size: 12px; opacity: 0.8;">Hologram Sistemi Devrede</p>
     </div>
 
     <a-scene 
         mindar-image="imageTargetSrc: ./targets.mind; uiScanning: #none; uiError: #none; uiLoading: #none; autoStart: true; filterMinCF:0.0001; filterBeta: 0.001;" 
-        embedded 
-        color-space="sRGB" 
-        renderer="colorManagement: true, physicallyCorrectLights, antialias: true" 
+        embedded color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <a-asset-item id="anitkabirModel" src="./models/anitkabir.glb"></a-asset-item>
+            <a-asset-item id="anitModel" src="./models/anitkabir.glb"></a-asset-item>
         </a-assets>
 
-        <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;"></a-camera>
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity id="anitkabirTarget" mindar-image-target="targetIndex: 0">
+        <a-entity id="target0" mindar-image-target="targetIndex: 0">
             
-            <a-entity>
-                <a-light type="point" color="#ff0000" intensity="2" position="0 1 1"></a-light>
-                <a-light type="ambient" color="#333"></a-light>
+            <a-light type="point" color="#ff0000" intensity="2" position="0 1 1"></a-light>
+            
+            <a-gltf-model 
+                src="#anitModel" 
+                position="0 0 0.1" 
+                scale="0.15 0.15 0.15"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 12000; easing: linear">
+            </a-gltf-model>
 
-                <a-gltf-model 
-                    src="#anitkabirModel" 
-                    position="0 0 0.1" 
-                    scale="0.14 0.14 0.14" 
-                    rotation="0 0 0"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 12000; easing: linear">
-                </a-gltf-model>
-
-                <a-ring color="#ff0000" radius-inner="0.35" radius-outer="0.38" rotation="-90 0 0" 
-                        position="0 -0.15 0" opacity="0.8"
-                        animation="property: scale; to: 1.4 1.4 1.4; dur: 2000; loop: true; dir: alternate">
-                </a-ring>
-                
-                <a-ring color="#ff0000" radius-inner="0.45" radius-outer="0.46" rotation="-90 0 0" 
-                        position="0 -0.2 0" opacity="0.4"
-                        animation="property: opacity; to: 0; dur: 1500; loop: true; easing: linear">
-                </a-ring>
-            </a-entity>
-
+            <a-ring color="#ff0000" radius-inner="0.3" radius-outer="0.35" rotation="-90 0 0" 
+                    position="0 -0.1 0" opacity="0.8"
+                    animation="property: scale; to: 1.4 1.4 1.4; dur: 2000; loop: true; dir: alternate">
+            </a-ring>
         </a-entity>
     </a-scene>
 
     <script>
         const sceneEl = document.querySelector('a-scene');
         const overlay = document.querySelector('#ar-overlay');
-        const card = document.querySelector('#hologram-card');
-        const targetEntity = document.querySelector('#anitkabirTarget');
+        const info = document.querySelector('#info-panel');
+        const target = document.querySelector('#target0');
 
-        // 1. Kamera ve AR Hazır Olduğunda
-        sceneEl.addEventListener("arReady", () => {
-            console.log("MindAR ve Kamera Tam Ekran Olarak Hazırlandı.");
-            document.querySelector('#status-text').innerHTML = "GÖRSEL HAZIR<br><span style='color:#ff0000'>TARAMAYA BAŞLAYIN</span>";
-        });
+        // Kamera Boyutu Düzeltme Fonksiyonu
+        function fixVideoSize() {
+            const video = document.querySelector('video');
+            if (video) {
+                video.style.width = window.innerWidth + 'px';
+                video.style.height = window.innerHeight + 'px';
+            }
+        }
 
-        // 2. Hedef Bulunduğunda Arayüzü Gizle ve Modeli Göster
-        targetEntity.addEventListener("targetFound", () => {
+        // Sahne başladığında ve ekran döndüğünde boyutu düzelt
+        sceneEl.addEventListener("arReady", fixVideoSize);
+        window.addEventListener("resize", fixVideoSize);
+
+        // Hedef Yönetimi
+        target.addEventListener("targetFound", () => {
             overlay.classList.add("hidden");
-            card.classList.add("active-info");
-            console.log("Anıtkabir Tespit Edildi.");
+            info.classList.add("show-info");
         });
 
-        // 3. Hedef Kaybedildiğinde Arayüzü Geri Getir
-        targetEntity.addEventListener("targetLost", () => {
+        target.addEventListener("targetLost", () => {
             overlay.classList.remove("hidden");
-            card.classList.remove("active-info");
+            info.classList.remove("show-info");
         });
 
-        // 4. Zorunlu Kamera Fix: Bazı cihazlarda gecikmeli açılma için
+        // Sayfa yüklendikten 2 saniye sonra kamerayı tekrar zorla
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                const video = document.querySelector('video');
-                if (video) {
-                    video.style.zIndex = "1";
-                    video.style.position = "fixed";
-                    console.log("Video katmanı zorlandı.");
-                }
-            }, 2500);
+            setTimeout(fixVideoSize, 2000);
         });
     </script>
 </body>
