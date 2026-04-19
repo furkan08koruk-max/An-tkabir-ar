@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Anıtkabir AR Projesi | Ibrahim Yildirim</title>
+    <title>Anıtkabir Hologram Projesi | Profesyonel v5.0</title>
     
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        /* 1. Kamera Görüntüsünü Görünür Kılmak İçin Kritik CSS */
+        /* Tam Ekran Fix */
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: transparent !important; }
         
         /* A-Frame Sahnesini Şeffaf Yapıyoruz */
         a-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; }
         
-        /* MindAR'ın oluşturduğu Video ve Canvas'ı Tam Ekran Yapıyoruz */
-        .mindar-ui-overlay { z-index: 100 !important; }
+        /* Kamera Görüntüsü Fix */
         video, canvas { 
             position: absolute !important; 
             top: 50% !important; left: 50% !important; 
@@ -25,7 +24,7 @@
             object-fit: cover !important; z-index: -1 !important; 
         }
 
-        /* 2. Anıtkabir Kırmızısı UI Tasarımı */
+        /* Kurumsal Anıtkabir Kırmızısı UI */
         #ar-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -33,53 +32,51 @@
         }
 
         .scanner-box {
-            width: 280px; height: 280px;
-            border: 2px solid #ff0000; border-radius: 30px;
-            box-shadow: 0 0 20px rgba(255, 0, 0, 0.4), inset 0 0 20px rgba(255, 0, 0, 0.2);
+            width: 300px; height: 300px;
+            border: 1px solid rgba(255, 0, 0, 0.4); border-radius: 50%;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.2), inset 0 0 15px rgba(255, 0, 0, 0.1);
             position: relative; overflow: hidden;
         }
 
         .laser-line {
-            width: 100%; height: 3px; background: #ff0000;
-            box-shadow: 0 0 15px #ff0000; position: absolute;
-            top: 0; animation: scanAnimation 3.5s ease-in-out infinite;
+            width: 100%; height: 2px; background: rgba(255, 0, 0, 0.7);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.7); position: absolute;
+            top: 0; animation: scanAnimation 4s ease-in-out infinite;
         }
 
         @keyframes scanAnimation {
-            0%, 100% { top: 5%; opacity: 0.3; }
-            50% { top: 90%; opacity: 1; }
+            0%, 100% { top: 10%; opacity: 0.2; }
+            50% { top: 90%; opacity: 0.8; }
         }
 
         #status-label {
-            margin-top: 25px; color: #ff0000; font-family: 'Segoe UI', sans-serif;
-            font-weight: bold; letter-spacing: 3px; text-shadow: 0 0 8px #000;
-            background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 10px;
+            margin-top: 30px; color: #ff3333; font-family: 'Segoe UI', sans-serif;
+            font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 5px #000;
         }
 
-        /* Alt Bilgi Paneli */
+        /* Bilgi Paneli */
         #bottom-panel {
-            position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
-            width: 90%; background: linear-gradient(to right, rgba(0,0,0,0), #600000, rgba(0,0,0,0));
-            border-top: 2px solid #ff0000; color: white; padding: 20px;
-            text-align: center; z-index: 600; transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: fixed; bottom: -120px; left: 50%; transform: translateX(-50%);
+            width: 85%; background: rgba(0, 0, 0, 0.85); border: 1px solid #ff1111;
+            border-radius: 15px; color: white; padding: 15px; text-align: center;
+            z-index: 600; transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 20px rgba(255,0,0,0.2);
         }
 
-        .panel-active { bottom: 0px !important; }
+        .panel-active { bottom: 30px !important; }
         .ui-hidden { opacity: 0 !important; }
     </style>
 </head>
 <body>
 
     <div id="ar-overlay">
-        <div class="scanner-box">
-            <div class="laser-line"></div>
-        </div>
-        <div id="status-label">GÖRSEL TARANIYOR...</div>
+        <div class="scanner-box"><div class="laser-line"></div></div>
+        <div id="status-label">ANITKABİR GÖRSELİNİ TARATIN...</div>
     </div>
 
     <div id="bottom-panel">
-        <h2 style="margin: 0; letter-spacing: 2px;">ANITKABİR</h2>
-        <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.8;">Hologram Başarıyla Oluşturuldu</p>
+        <h3 style="margin: 0; color: #ff3333;">ANITKABİR HOLOGRAMI</h3>
+        <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.8;">Wireframe & Nebula Effect v5.0</p>
     </div>
 
     <a-scene 
@@ -87,7 +84,9 @@
         embedded 
         device-orientation-permission-ui="enabled: false"
         vr-mode-ui="enabled: false"
-        renderer="colorManagement: true, physicallyCorrectLights, alpha: true"> <a-assets>
+        renderer="colorManagement: true, physicallyCorrectLights, alpha: true">
+        
+        <a-assets>
             <a-asset-item id="modelAnitkabir" src="./models/anitkabir.glb"></a-asset-item>
         </a-assets>
 
@@ -95,24 +94,31 @@
 
         <a-entity id="targetNode" mindar-image-target="targetIndex: 0">
             
-            <a-entity id="hologram-group">
-                <a-light type="point" color="#ff0000" intensity="2" position="0 1 0.5"></a-light>
+            <a-entity id="hologram-effect" position="0 0 0.1">
+                
+                <a-light type="point" color="#00ffff" intensity="1" position="-1 1 0.5"></a-light>
+                <a-light type="point" color="#ff00ff" intensity="1" position="1 1 0.5"></a-light>
                 
                 <a-gltf-model 
+                    id="anitModel"
                     src="#modelAnitkabir" 
-                    position="0 0 0.1" 
+                    position="0 0 0" 
                     scale="0.14 0.14 0.14"
-                    animation="property: rotation; to: 0 360 0; loop: true; dur: 10000; easing: linear">
+                    material="wireframe: true; wireframeLinewidth: 1; color: #00ffff; emissive: #ff00ff; emissiveIntensity: 0.5; transparent: true; opacity: 0.8;"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 15000; easing: linear">
                 </a-gltf-model>
 
-                <a-ring color="#ff0000" radius-inner="0.35" radius-outer="0.37" rotation="-90 0 0" 
-                        position="0 -0.12 0" opacity="0.7"
-                        animation="property: scale; to: 1.4 1.4 1.4; dur: 2000; loop: true; dir: alternate">
-                </a-ring>
+                <a-sphere 
+                    id="nebula"
+                    position="0 0.2 0" 
+                    radius="0.4" 
+                    material="color: #40e0d0; emissive: #ff00ff; emissiveIntensity: 0.3; transparent: true; opacity: 0.1; side: double;"
+                    animation="property: material.opacity; to: 0.2; dur: 2000; loop: true; dir: alternate">
+                </a-sphere>
 
-                <a-cylinder color="#ff0000" height="1.5" radius="0.35" opacity="0.1" 
-                            open-ended="true" side="double" position="0 0.5 0">
-                </a-cylinder>
+                <a-grid-helper position="0 -0.1 0" rotation="90 0 0" scale="0.1 0.1 0.1" color="#ff00ff" opacity="0.2"></a-grid-helper>
+
+                <a-cylinder color="#ff00ff" height="2" radius="0.45" opacity="0.05" open-ended="true" side="double" position="0 0.7 0"></a-cylinder>
             </a-entity>
 
         </a-entity>
@@ -128,7 +134,6 @@
         target.addEventListener("targetFound", () => {
             overlay.classList.add("ui-hidden");
             panel.classList.add("panel-active");
-            console.log("Hedef bulundu, hologram aktif.");
         });
 
         target.addEventListener("targetLost", () => {
@@ -136,25 +141,28 @@
             panel.classList.remove("panel-active");
         });
 
-        // 4. Kamera Başlatma Denetimi
+        // AR Hazır Olduğunda
         scene.addEventListener("arReady", () => {
             document.querySelector('#status-label').innerText = "GÖRSELİ OKUTUN";
         });
 
-        scene.addEventListener("arError", () => {
-            document.querySelector('#status-label').innerText = "KAMERA HATASI!";
-            document.querySelector('#status-label').style.color = "white";
-        });
-
-        // Sayfa yüklendiğinde videoyu zorla görünür kılmak için ufak bir geciktirmeli kontrol
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const v = document.querySelector('video');
-                if(v) {
-                    v.style.display = "block";
-                    v.parentElement.style.zIndex = "1";
+        // 6. Gelişmiş Shader Modifikasyonu (Model yüklendiğinde materyali ezmek için)
+        const anitModelEl = document.querySelector('#anitModel');
+        anitModelEl.addEventListener('model-loaded', () => {
+            const mesh = anitModelEl.getObject3D('mesh');
+            mesh.traverse((node) => {
+                if (node.isMesh) {
+                    node.material = new THREE.MeshPhongMaterial({
+                        color: new THREE.Color(0x00ffff), // Cyan tel kafes
+                        emissive: new THREE.Color(0xff00ff), // Magenta parlama
+                        wireframe: true,
+                        wireframeLinewidth: 2,
+                        transparent: true,
+                        opacity: 0.8,
+                        side: THREE.DoubleSide
+                    });
                 }
-            }, 2000);
+            });
         });
     </script>
 </body>
