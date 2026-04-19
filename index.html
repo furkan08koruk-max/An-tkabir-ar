@@ -1,35 +1,107 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="tr">
+<head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anıtkabir AR Projesi</title>
+    <title>Anıtkabir AR Hologram Deneyimi</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+    
     <style>
-      body { margin: 0; overflow: hidden; }
+        /* Modern Kullanıcı Arayüzü */
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        
+        /* Açılış Ekranı */
+        #scanning-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; z-index: 100; transition: opacity 0.5s;
+        }
+        
+        .scanner-frame {
+            width: 250px; height: 250px;
+            border: 2px solid #00fff2;
+            box-shadow: 0 0 15px #00fff2;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .line {
+            width: 100%; height: 2px; background: #00fff2;
+            position: absolute; top: 0;
+            animation: scan 2s infinite linear;
+        }
+
+        @keyframes scan {
+            0% { top: 0; } 100% { top: 100%; }
+        }
+
+        .hidden { display: none !important; }
     </style>
-  </head>
-  <body>
-    <a-scene mindar-image="imageTargetSrc: ./targets.mind; uiScanning: yes;" 
-             color-space="sRGB" 
-             renderer="colorManagement: true, physicallyCorrectLights" 
-             vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false">
-      
-      <a-assets>
-        <a-asset-item id="anitkabirModel" src="./models/anitkabir.glb"></a-asset-item>
-      </a-assets>
+</head>
+<body>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <div id="scanning-overlay">
+        <div class="scanner-frame">
+            <div class="line"></div>
+        </div>
+        <p>Anıtkabir Görselini Taratın...</p>
+        <small>Hologram yükleniyor</small>
+    </div>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-gltf-model src="#anitkabirModel" 
-                      rotation="0 0 0" 
-                      position="0 0 0" 
-                      scale="0.1 0.1 0.1"
-                      animation="property: rotation; to: 0 360 0; loop: true; dur: 8000">
-        </a-gltf-model>
-      </a-entity>
+    <a-scene 
+        mindar-image="imageTargetSrc: ./targets.mind; uiScanning: #scanning-overlay; filterMinCF:0.001; filterBeta: 0.01;" 
+        color-space="sRGB" 
+        renderer="colorManagement: true, physicallyCorrectLights" 
+        vr-mode-ui="enabled: false" 
+        device-orientation-permission-ui="enabled: false">
       
+        <a-assets>
+            <a-asset-item id="anitkabirModel" src="./models/anitkabir.glb"></a-asset-item>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity mindar-image-target="targetIndex: 0">
+            
+            <a-light type="directional" color="#00fff2" intensity="0.8" position="1 1 1"></a-light>
+            <a-light type="ambient" color="#ffffff" intensity="0.5"></a-light>
+
+            <a-entity id="hologram-container" 
+                rotation="0 0 0" 
+                position="0 0 0.1" 
+                scale="0.15 0.15 0.15">
+                
+                <a-gltf-model 
+                    src="#anitkabirModel" 
+                    material="transparent: true; opacity: 0.8;"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 12000; easing: linear">
+                </a-gltf-model>
+
+                <a-ring color="#00fff2" radius-inner="0.8" radius-outer="0.9" 
+                        rotation="-90 0 0" position="0 -0.5 0"
+                        animation="property: scale; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 2000">
+                </a-ring>
+            </a-entity>
+
+        </a-entity>
     </a-scene>
-  </body>
+
+    <script>
+        // Model Bulunduğunda Arayüzü Kapatma Kontrolü
+        const sceneEl = document.querySelector('a-scene');
+        const overlay = document.querySelector('#scanning-overlay');
+
+        sceneEl.addEventListener("targetFound", event => {
+            console.log("Hedef bulundu!");
+            overlay.classList.add("hidden");
+        });
+
+        sceneEl.addEventListener("targetLost", event => {
+            console.log("Hedef kayboldu.");
+            overlay.classList.remove("hidden");
+        });
+    </script>
+</body>
 </html>
