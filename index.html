@@ -3,71 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Anıtkabir AR - Ibrahim Yildirim</title>
+    <title>Anıtkabir AR Projesi - Sesli Rehber</title>
     
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
 
     <style>
-        /* KAMERA TAM EKRAN ZORLAMASI */
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; background-color: #000; 
-        }
+        /* 1. ŞEFFAF VE TAM EKRAN KAMERA AYARLARI */
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; }
         
-        /* MindAR ve A-Frame'in oluşturduğu tüm görsel öğeleri tam ekrana sabitle */
-        canvas, video {
-            width: 100vw !important;
-            height: 100vh !important;
-            object-fit: cover !important;
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
+        /* Video katmanını tam ekrana zorla */
+        video, canvas {
+            width: 100vw !important; height: 100vh !important;
+            object-fit: cover !important; position: fixed !important;
+            top: 0; left: 0; z-index: -1;
         }
 
-        /* ANITKABİR KIRMIZISI ARAYÜZ */
+        /* 2. ANITKABİR KIRMIZISI ŞEFFAF ARAYÜZ */
         #ar-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1000; display: flex; flex-direction: column;
+            z-index: 100; display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            background: rgba(0, 0, 0, 0.2); /* Kamera arkada görünsün */
+            background: rgba(0, 0, 0, 0.15); /* Çok hafif şeffaf siyahlık */
             pointer-events: none; transition: opacity 0.5s;
         }
 
+        /* Sadeleştirilmiş Kırmızı Tarama Çerçevesi */
         .scan-frame {
-            width: 70vw; height: 70vw; max-width: 300px; max-height: 300px;
-            border: 3px solid #ff0000; border-radius: 40px;
-            position: relative; box-shadow: 0 0 20px #ff0000;
+            width: 280px; height: 280px;
+            border: 2px solid #ff0000; border-radius: 30px;
+            position: relative; box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
         }
 
         .scan-line {
-            width: 100%; height: 4px; background: #ff0000;
-            box-shadow: 0 0 15px #ff0000; position: absolute;
-            top: 0; animation: moveLine 3s infinite ease-in-out;
+            width: 100%; height: 2px; background: #ff0000;
+            box-shadow: 0 0 10px #ff0000; position: absolute;
+            animation: moveLine 3s infinite ease-in-out;
         }
 
         @keyframes moveLine {
-            0%, 100% { top: 10%; opacity: 0.3; }
+            0%, 100% { top: 10%; opacity: 0.2; }
             50% { top: 90%; opacity: 1; }
         }
 
         #status-text {
-            margin-top: 40px; color: #fff; font-family: sans-serif;
-            font-weight: bold; letter-spacing: 2px; text-align: center;
-            text-shadow: 0 0 10px #ff0000; background: rgba(0,0,0,0.5);
-            padding: 10px 20px; border-radius: 20px;
+            margin-top: 30px; color: #fff; font-family: 'Segoe UI', sans-serif;
+            font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #ff0000;
+            background: rgba(139, 0, 0, 0.6); padding: 10px 25px; border-radius: 30px;
         }
 
-        /* ALT BİLGİ KARTI */
-        #info-panel {
-            position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%);
-            width: 80%; background: linear-gradient(to right, #600, #b00, #600);
-            color: white; padding: 15px; border-radius: 20px; text-align: center;
-            z-index: 1001; transition: bottom 0.5s; border: 1px solid #fff;
+        /* 3. BİLGİ PANELİ VE SES BUTONU */
+        #info-card {
+            position: fixed; bottom: -200px; left: 50%; transform: translateX(-50%);
+            width: 85%; background: linear-gradient(135deg, #400 0%, #000 100%);
+            border: 2px solid #ff0000; border-radius: 20px; color: #fff;
+            padding: 20px; text-align: center; z-index: 101;
+            transition: bottom 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .show-info { bottom: 50px !important; }
+        .active-info { bottom: 30px !important; }
         .hidden { opacity: 0 !important; }
+
+        /* Ses dosyası çalarken kullanıcıyı bilgilendir */
+        #audio-status { font-size: 10px; color: #00ff00; margin-top: 5px; display: none; }
     </style>
 </head>
 <body>
@@ -76,79 +74,98 @@
         <div class="scan-frame">
             <div class="scan-line"></div>
         </div>
-        <div id="status-text">ANITKABİR GÖRSELİNİ TARAYIN</div>
+        <div id="status-text">ANITKABİR'İ TARIYOR...</div>
     </div>
 
-    <div id="info-panel">
-        <h2 style="margin:0; font-size: 18px;">ANITKABİR</h2>
-        <p style="margin:5px 0 0 0; font-size: 12px; opacity: 0.8;">Hologram Sistemi Devrede</p>
+    <div id="info-card">
+        <h2 style="margin: 0; font-size: 20px;">ANITKABİR</h2>
+        <p style="margin: 10px 0; font-size: 13px; opacity: 0.8;">Hologram Projeksiyonu ve Sesli Rehber Aktif.</p>
+        <div id="audio-status">● Sesli anlatım çalınıyor...</div>
     </div>
 
     <a-scene 
-        mindar-image="imageTargetSrc: ./targets.mind; uiScanning: #none; uiError: #none; uiLoading: #none; autoStart: true; filterMinCF:0.0001; filterBeta: 0.001;" 
+        mindar-image="imageTargetSrc: ./targets.mind; uiScanning: #none; uiError: #none; uiLoading: #none; autoStart: true;" 
         embedded color-space="sRGB" 
         renderer="colorManagement: true, physicallyCorrectLights" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false">
         
         <a-assets>
-            <a-asset-item id="anitModel" src="./models/anitkabir.glb"></a-asset-item>
+            <a-asset-item id="anitkabirModel" src="./models/anitkabir.glb"></a-asset-item>
+            <audio id="bilgiSes" src="audio/anitkabir_bilgi.mp3" preload="auto"></audio>
         </a-assets>
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity id="target0" mindar-image-target="targetIndex: 0">
+        <a-entity id="anitkabirTarget" mindar-image-target="targetIndex: 0">
             
             <a-light type="point" color="#ff0000" intensity="2" position="0 1 1"></a-light>
             
-            <a-gltf-model 
-                src="#anitModel" 
-                position="0 0 0.1" 
-                scale="0.15 0.15 0.15"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 12000; easing: linear">
-            </a-gltf-model>
+            <a-entity id="hologram-model">
+                <a-gltf-model 
+                    src="#anitkabirModel" 
+                    position="0 0 0.1" 
+                    scale="0.15 0.15 0.15"
+                    animation="property: rotation; to: 0 360 0; loop: true; dur: 12000; easing: linear">
+                </a-gltf-model>
 
-            <a-ring color="#ff0000" radius-inner="0.3" radius-outer="0.35" rotation="-90 0 0" 
-                    position="0 -0.1 0" opacity="0.8"
-                    animation="property: scale; to: 1.4 1.4 1.4; dur: 2000; loop: true; dir: alternate">
-            </a-ring>
+                <a-ring color="#ff0000" radius-inner="0.32" radius-outer="0.35" rotation="-90 0 0" 
+                        position="0 -0.12 0" opacity="0.8"
+                        animation="property: scale; to: 1.4 1.4 1.4; dur: 2000; loop: true; dir: alternate">
+                </a-ring>
+            </a-entity>
+
         </a-entity>
     </a-scene>
 
     <script>
         const sceneEl = document.querySelector('a-scene');
         const overlay = document.querySelector('#ar-overlay');
-        const info = document.querySelector('#info-panel');
-        const target = document.querySelector('#target0');
+        const card = document.querySelector('#info-card');
+        const target = document.querySelector('#anitkabirTarget');
+        const audio = document.querySelector('#bilgiSes');
+        const audioStatus = document.querySelector('#audio-status');
 
-        // Kamera Boyutu Düzeltme Fonksiyonu
-        function fixVideoSize() {
+        // 1. Tarayıcıda sesin çalması için kullanıcı etkileşimi şarttır.
+        // Siteye ilk tıklandığında sesi "unlock" yapıyoruz.
+        document.body.addEventListener('click', () => {
+            audio.play();
+            audio.pause(); 
+            console.log("Ses sistemi hazır.");
+        }, { once: true });
+
+        // 2. Hedef Bulunduğunda
+        target.addEventListener("targetFound", () => {
+            overlay.classList.add("hidden");
+            card.classList.add("active-info");
+            
+            // Sesi başlat
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Ses başlatılamadı, tıklama gerekiyor."));
+            audioStatus.style.display = "block";
+            console.log("Anıtkabir bulundu, ses başlatıldı.");
+        });
+
+        // 3. Hedef Kaybedildiğinde
+        target.addEventListener("targetLost", () => {
+            overlay.classList.remove("hidden");
+            card.classList.remove("active-info");
+            
+            // Sesi durdur
+            audio.pause();
+            audioStatus.style.display = "none";
+        });
+
+        // 4. Kamera Fix (Tam Ekran Zorlaması)
+        function fixLayout() {
             const video = document.querySelector('video');
             if (video) {
                 video.style.width = window.innerWidth + 'px';
                 video.style.height = window.innerHeight + 'px';
             }
         }
-
-        // Sahne başladığında ve ekran döndüğünde boyutu düzelt
-        sceneEl.addEventListener("arReady", fixVideoSize);
-        window.addEventListener("resize", fixVideoSize);
-
-        // Hedef Yönetimi
-        target.addEventListener("targetFound", () => {
-            overlay.classList.add("hidden");
-            info.classList.add("show-info");
-        });
-
-        target.addEventListener("targetLost", () => {
-            overlay.classList.remove("hidden");
-            info.classList.remove("show-info");
-        });
-
-        // Sayfa yüklendikten 2 saniye sonra kamerayı tekrar zorla
-        window.addEventListener('load', () => {
-            setTimeout(fixVideoSize, 2000);
-        });
+        window.addEventListener('resize', fixLayout);
+        sceneEl.addEventListener('arReady', fixLayout);
     </script>
 </body>
 </html>
